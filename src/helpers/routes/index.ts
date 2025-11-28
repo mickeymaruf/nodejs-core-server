@@ -19,3 +19,16 @@ addRoutes("POST", "/users", async (req, res) => {
     path: req.url,
   });
 });
+
+addRoutes("PUT", "/users/:id", async (req, res) => {
+  const { id } = (req as any).params;
+  const body = await parseBody(req);
+
+  console.log(id);
+
+  sendJson(res, 201, {
+    success: true,
+    data: body,
+    path: req.url,
+  });
+});

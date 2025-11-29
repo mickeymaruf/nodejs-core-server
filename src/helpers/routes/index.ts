@@ -26,8 +26,9 @@ addRoutes("POST", "/users", async (req, res) => {
   const newUser = body;
 
   const users = readUsers();
+  const eixsts = users.some((u: any) => u.id === newUser.id);
 
-  if (users.some((u: any) => u.id === newUser.id)) {
+  if (eixsts) {
     return sendJson(res, 404, {
       success: false,
       message: "User already exists!",
@@ -71,6 +72,31 @@ addRoutes("PUT", "/users/:id", async (req, res) => {
   sendJson(res, 201, {
     success: true,
     data: body,
+    path: req.url,
+  });
+});
+
+addRoutes("DELETE", "/users/:id", (req, res) => {
+  const { id } = (req as any).params;
+
+  const users = readUsers();
+  const exists = users.some((u: any) => u.id == id);
+
+  if (!exists) {
+    return sendJson(res, 404, {
+      success: false,
+      message: "User not found!",
+      path: req.url,
+    });
+  }
+
+  const newUsers = users.filter((u: any) => u.id != id);
+
+  writeUsers(newUsers);
+
+  sendJson(res, 201, {
+    success: true,
+    message: `User with id ${id} is deleted!`,
     path: req.url,
   });
 });

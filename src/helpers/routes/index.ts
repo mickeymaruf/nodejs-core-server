@@ -1,3 +1,4 @@
+import { readUsers, writeUsers } from "../fileDb";
 import parseBody from "../parseBody";
 import addRoutes from "../RouteHandler";
 import sendJson from "../sendJson";
@@ -10,12 +11,36 @@ addRoutes("GET", "/", (req, res) => {
   });
 });
 
-addRoutes("POST", "/users", async (req, res) => {
-  const body = await parseBody(req);
+addRoutes("GET", "/users", async (req, res) => {
+  const users = readUsers();
 
   sendJson(res, 201, {
     success: true,
-    data: body,
+    data: users,
+    path: req.url,
+  });
+});
+
+addRoutes("POST", "/users", async (req, res) => {
+  const body = await parseBody(req);
+  const newUser = body;
+
+  const users = readUsers();
+
+  if (users.some((u: any) => u.id === newUser.id)) {
+    return sendJson(res, 404, {
+      success: false,
+      message: "User already exists!",
+      path: req.url,
+    });
+  }
+
+  users.push(newUser);
+  writeUsers(users);
+
+  sendJson(res, 201, {
+    success: true,
+    data: newUser,
     path: req.url,
   });
 });
@@ -24,7 +49,24 @@ addRoutes("PUT", "/users/:id", async (req, res) => {
   const { id } = (req as any).params;
   const body = await parseBody(req);
 
-  console.log(id);
+  const users = readUsers();
+  const index = users.findIndex((u: any) => u.id == id);
+
+  if (index == -1) {
+    return sendJson(res, 404, {
+      success: false,
+      message: "User not found!",
+      path: req.url,
+    });
+  }
+
+  delete body.id;
+  users[index] = {
+    ...users[index],
+    ...body,
+  };
+
+  writeUsers(users);
 
   sendJson(res, 201, {
     success: true,
